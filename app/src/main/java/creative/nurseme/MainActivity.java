@@ -97,12 +97,25 @@ public class MainActivity extends FragmentActivity
 
             Location location = locationManager.getLastKnownLocation(locationManager
                     .getBestProvider(criteria, false));
+            if (location != null)
+            {
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(location.getLatitude(), location.getLongitude()), 13));
 
+                CameraPosition cameraPosition = new CameraPosition.Builder()
+                        .target(new LatLng(location.getLatitude(), location.getLongitude()))      // Sets the center of the map to location user
+                        .zoom(17)                   // Sets the zoom
+                        .bearing(90)                // Sets the orientation of the camera to east
+                        .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                        .build();                   // Creates a CameraPosition from the builder
+                map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+            }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new android.location.LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
                     Log.d("Location ", location.getLatitude()+ " " + location.getLongitude());
-                    
+
                 }
 
                 @Override
