@@ -1,8 +1,6 @@
 package creative.nurseme;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,7 +9,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -24,22 +21,24 @@ import android.widget.Toast;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.maps.model.LatLng;
 
 
 public class MainActivity extends FragmentActivity
         implements OnMapReadyCallback {
 
     private EditText x;
+    String TAG = "Main ACtivity";
+    private Place Destination;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,18 +49,34 @@ public class MainActivity extends FragmentActivity
         //  startActivity(intent);
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
+
         mapFragment.getMapAsync(this);
-        x = (EditText) findViewById(R.id.edit_dest);
+
         findViewById(R.id.set_dest_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String Destination  = x.getText().toString();
                 openAutocompleteActivity();
             }
         });
 
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult: I was here");
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                Destination = PlaceAutocomplete.getPlace(this, data);
+                Log.i(TAG, "Place: " + Destination.getName());
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Log.i(TAG, status.getStatusMessage());
 
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
+        }
+    }
     private void openAutocompleteActivity() {
         try {
             // The autocomplete activity requires Google Play Services to be available. The intent
@@ -69,6 +84,7 @@ public class MainActivity extends FragmentActivity
             Intent intent = new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
                     .build(this);
             startActivityForResult(intent, 1);
+
         } catch (GooglePlayServicesRepairableException e) {
             // Indicates that Google Play Services is either not installed or not up to date. Prompt
             // the user to correct the issue.
@@ -85,7 +101,7 @@ public class MainActivity extends FragmentActivity
         }
     }
     @Override
-    public void onMapReady(GoogleMap map) {
+    public void onMapReady(final GoogleMap map) {
 
         map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -93,46 +109,35 @@ public class MainActivity extends FragmentActivity
             map.setMyLocationEnabled(true);
             LocationManager locationManager = (LocationManager)
                     getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
 
-            Location location = locationManager.getLastKnownLocation(locationManager
-                    .getBestProvider(criteria, false));
-            if (location != null)
-            {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(location.getLatitude(), location.getLongitude()), 13));
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    3000, 0, new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude()));
+                            CameraUpdate zoom = CameraUpdateFactory.zoomTo(16);
 
-                CameraPosition cameraPosition = new CameraPosition.Builder()
-                        .target(new LatLng(location.getLatitude(), location.getLongitude()))      // Sets the center of the map to location user
-                        .zoom(17)                   // Sets the zoom
-                        .bearing(90)                // Sets the orientation of the camera to east
-                        .tilt(40)                   // Sets the tilt of the camera to 30 degrees
-                        .build();                   // Creates a CameraPosition from the builder
-                map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                            map.moveCamera(center);
+                            map.animateCamera(zoom);
 
-            }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new android.location.LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    Log.d("Location ", location.getLatitude()+ " " + location.getLongitude());
+                        }
 
-                }
+                        @Override
+                        public void onStatusChanged(String provider, int status, Bundle extras) {
 
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-                    //I don't know
-                }
+                        }
 
-                @Override
-                public void onProviderEnabled(String s) {
-                    //I don't know
-                }
+                        @Override
+                        public void onProviderEnabled(String provider) {
 
-                @Override
-                public void onProviderDisabled(String s) {
-                    //I don't know
-                }
-            });
+                        }
+
+                        @Override
+                        public void onProviderDisabled(String provider) {
+
+                        }
+                    });
+
 
         } else {
             Toast.makeText(this, "You have to accept to enjoy all app's services!", Toast.LENGTH_LONG).show();
@@ -140,7 +145,7 @@ public class MainActivity extends FragmentActivity
         map.setTrafficEnabled(true);
         map.setIndoorEnabled(true);
         map.setBuildingsEnabled(true);
-        map.getUiSettings().setZoomControlsEnabled(true);
+
 
     }
 

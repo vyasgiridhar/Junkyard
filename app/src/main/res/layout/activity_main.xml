@@ -17,12 +17,8 @@
         android:id="@+id/dest_layout"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
-        <EditText android:id="@+id/edit_dest"
-            android:layout_width="267dp"
-            android:layout_height="wrap_content"
-            android:text="@string/Destination"/>
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/set"
             android:id="@+id/set_dest_button"/>
