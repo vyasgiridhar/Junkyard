@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -221,17 +222,24 @@ public class MainActivity extends FragmentActivity
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
+            buildGoogleApiClient();
+            mGoogleApiClient.connect();
 
         } else {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+            map.setMyLocationEnabled(true);
+            buildGoogleApiClient();
+            mGoogleApiClient.connect();
+
             Toast.makeText(this, "You have to accept to enjoy all app's services!", Toast.LENGTH_LONG).show();
         }
         map.setTrafficEnabled(true);
         map.setIndoorEnabled(true);
         map.setBuildingsEnabled(true);
 
-        buildGoogleApiClient();
 
-        mGoogleApiClient.connect();
         Toast.makeText(this, "mGoogleApiClient.isConnecting()"+ mGoogleApiClient.isConnecting(), Toast.LENGTH_SHORT).show();
     }
 

@@ -3,6 +3,7 @@ package creative.nurseme;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -65,7 +66,8 @@ public class PlacePopulator extends AsyncTask<Void, Void, Void> {
             outputresponse = br.readLine();
             Log.d(TAG, "doInBackground: "+ outputresponse);
             placesjson = new JSONObject(outputresponse);
-           // googlePlacesList = placeJsonParser.parse(googlePlacesJson);
+            JSONArray array = placesjson.getJSONArray("results");
+            Log.d(TAG, "doInBackground: "+ array.get(0));
 
         }catch(IOException e){
             Log.e(TAG, "doInBackground: ");
