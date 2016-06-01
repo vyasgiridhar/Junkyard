@@ -1,6 +1,7 @@
 package creative.nurseme;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,6 +19,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -28,6 +34,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceRequest;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,22 +46,31 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends FragmentActivity
-        implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,LocationListener {
+        implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,LocationListener,RoutingListener {
 
     private EditText x;
     String TAG = "Main ACtivity";
     private Place Destination;
+    private ProgressDialog pd;
     private GoogleMap map;
     LatLng latLng;
     protected GoogleApiClient mGoogleApiClient;
     protected Location mLastLocation;
     protected LocationRequest mLocationRequest;
     Marker currLocationMarker;
+    protected boolean located;
+    private List<Polyline> polylines;
 
 
+    private static final int[] COLORS = new int[]{R.color.black,R.color.wallet_holo_blue_light,R.color.primary_darker,R.color.accent,R.color.primary_dark_material_light};
 
 
     @Override
@@ -63,6 +79,8 @@ public class MainActivity extends FragmentActivity
         setContentView(R.layout.activity_main);
 
         buildGoogleApiClient();
+        polylines = new ArrayList<>();
+
         //  Intent intent = new Intent(this, LoginActivity.class);
         //  startActivity(intent);
         MapFragment mapFragment = (MapFragment) getFragmentManager()
@@ -73,7 +91,11 @@ public class MainActivity extends FragmentActivity
         findViewById(R.id.set_dest_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(located)
                 openAutocompleteActivity();
+                else{
+                    Log.d(TAG, "onClick: wait. aquiring your location");
+                }
             }
         });
 
@@ -115,7 +137,6 @@ public class MainActivity extends FragmentActivity
         markerOptions.position(latLng);
         markerOptions.title("Current Position");
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        currLocationMarker.remove();
         currLocationMarker = map.addMarker(markerOptions);
 
         Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
@@ -144,6 +165,7 @@ public class MainActivity extends FragmentActivity
         if (mLastLocation != null) {
             //place marker at current position
             //mGoogleMap.clear();
+            located = true;
             latLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
@@ -153,8 +175,8 @@ public class MainActivity extends FragmentActivity
         }
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(5000); //5 seconds
-        mLocationRequest.setFastestInterval(3000); //3 seconds
+        mLocationRequest.setInterval(10000); //10 seconds
+        mLocationRequest.setFastestInterval(9000); //9 seconds
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         //mLocationRequest.setSmallestDisplacement(0.1F); //1/10 meter
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
@@ -169,6 +191,14 @@ public class MainActivity extends FragmentActivity
             if (resultCode == RESULT_OK) {
                 Destination = PlaceAutocomplete.getPlace(this, data);
                 Log.i(TAG, "Place: " + Destination.getName());
+                LatLng latlng = Destination.getLatLng();
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latlng);
+                markerOptions.title("Destination");
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                map.addMarker(markerOptions);
+                route();
+
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 // TODO: Handle the error.
@@ -178,6 +208,79 @@ public class MainActivity extends FragmentActivity
                 // The user canceled the operation.
             }
         }
+    }
+
+
+    public void route()
+    {
+            pd = ProgressDialog.show(this, "Please wait.",
+                    "Fetching route information.", true);
+            Routing routing = new Routing.Builder()
+                    .travelMode(AbstractRouting.TravelMode.DRIVING)
+                    .withListener(this)
+                    .alternativeRoutes(true)
+                    .waypoints(latLng, Destination.getLatLng())
+                    .build();
+            routing.execute();
+    }
+
+    @Override
+    public void onRoutingFailure(RouteException e) {
+        // The Routing request failed
+        pd.dismiss();
+        if(e != null) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }else {
+            Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRoutingStart() {
+        // The Routing Request starts
+    }
+
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex)
+    {
+        pd.dismiss();
+        CameraUpdate center = CameraUpdateFactory.newLatLng(latLng);
+        CameraUpdate zoom = CameraUpdateFactory.zoomTo(16);
+
+        map.moveCamera(center);
+
+
+        if(polylines.size()>0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the map.
+        for (int i = 0; i <route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = map.addPolyline(polyOptions);
+            polylines.add(polyline);
+
+            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+        }
+
+        // Start marker
+
+    }
+
+    @Override
+    public void onRoutingCancelled() {
+        Log.i(TAG, "Routing was cancelled.");
     }
 
 
