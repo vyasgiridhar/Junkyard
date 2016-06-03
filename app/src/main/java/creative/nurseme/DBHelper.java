@@ -3,6 +3,7 @@ package creative.nurseme;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -20,14 +21,14 @@ public class DBHelper extends SQLiteOpenHelper {
     {
         super(context, DATABASE_NAME , null, 1);
     }
-
+    Parcel p;
     @Override
     public void onCreate(SQLiteDatabase db) {
 
         // TODO Auto-generated method stub
         db.execSQL(
                 "create table parcels " +
-                        "(id integer primary key, desc text,to text,weight integer)"
+                        "(id integer primary key, desc text,to text,from text,weight integer,)"
         );
     }
 
@@ -38,20 +39,25 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void insertParcel(String A,String B,String C){
+    public void insertParcel(Parcel P){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues v = new ContentValues();
-        v.put("desc",A);
-        v.put("to",B);
-        v.put("weight",C);
-        db.insert("contacts", null, v);
+        //v.put("desc",A);
+        //v.put("to",B);
+        //v.put("weight",C);
+        db.insert("parcels", null, v);
     }
 
     public Cursor getData(int id){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res = db.rawQuery("select * from contacts where id ="+id+"",null);
-        return res;
+        return db.rawQuery("select * from contacts where id ="+id+"",null);
     }
+
+    public int numberOfRows(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        return (int) DatabaseUtils.queryNumEntries(db, TABLE_NAME);
+    }
+
 
 
 }
