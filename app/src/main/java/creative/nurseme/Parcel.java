@@ -1,5 +1,7 @@
 package creative.nurseme;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -14,6 +16,9 @@ public class Parcel {
     private Boolean delivered;
     private int priority;
 
+    public Parcel(){
+
+    }
     public Parcel(String D,String F,String T,Date OnD,Date OnR,Boolean d,int P,Double W){
         this.Desc = D;
         this.From = F;
@@ -31,8 +36,11 @@ public class Parcel {
         Parcel p;
         Date d = new Date("12-12-12");
         for(i = 0;i<10;i++){
-            p = new Parcel("Mouse","Adyar","Coimbatore",d,null,false,1,12.1);
+            p = new Parcel("Mouse"+1,"Adyar","Coimbatore",d,null,false,1,12.1);
             x.add(p);
+        }
+        for(Parcel y : x){
+            Log.d("parcel", "populateparcel: "+ y.getDesc());
         }
         return x;
     }
