@@ -277,7 +277,7 @@ public class MainActivity extends FragmentActivity
             polyOptions.width(12 + i * 3);
             polyOptions.addAll(route.get(i).getPoints());
             map.addPolyline(polyOptions);
-            Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
         }
         getCenters();
         // Start marker

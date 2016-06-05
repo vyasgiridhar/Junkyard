@@ -66,7 +66,7 @@ public class SignupActivity extends AppCompatActivity {
         String password = _passwordText.getText().toString();
 
         // TODO: signup logic here.
-
+        Toast.makeText(this,"This is a dummy procedure",Toast.LENGTH_SHORT).show();
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {

@@ -33,7 +33,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-
+        Toast.makeText(this,"Email:techngage@gmail.com and password:hackerearth",Toast.LENGTH_LONG).show();
         _loginButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -68,17 +68,19 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        String email = _emailText.getText().toString();
-        String password = _passwordText.getText().toString();
+        final String email = _emailText.getText().toString();
+        final String password = _passwordText.getText().toString();
 
         // TODO: authentication logic here
-
+        Log.d(TAG, "login: "+email);
+        Log.d(TAG, "login: "+password);
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
-                        // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
-                        // onLoginFailed();
+                        if(email.equals("techngage@gmail.com") && password.equals("hackerearth")){
+                        onLoginSuccess();}
+                        else{
+                        onLoginFailed();}
                         progressDialog.dismiss();
                     }
                 }, 3000);
@@ -105,11 +107,13 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
+        Intent i = new Intent(this,MainActivity.class);
+        startActivity(i);
         finish();
     }
 
     public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "Wrong Credentials", Toast.LENGTH_LONG).show();
 
         _loginButton.setEnabled(true);
     }
@@ -127,7 +131,7 @@ public class LoginActivity extends AppCompatActivity {
             _emailText.setError(null);
         }
 
-        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
+        if (password.isEmpty() || password.length() < 4) {
             _passwordText.setError("between 4 and 10 alphanumeric characters");
             valid = false;
         } else {

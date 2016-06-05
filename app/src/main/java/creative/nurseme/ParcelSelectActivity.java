@@ -3,10 +3,12 @@ package creative.nurseme;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -36,6 +38,8 @@ public class ParcelSelectActivity  extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Log.d(TAG, "onItemClick: "+Parcels.get(i).getDesc());
+                Toast.makeText(ParcelSelectActivity.this,"Select us to view more",Toast.LENGTH_LONG).show();
+
             }
         });
     }
