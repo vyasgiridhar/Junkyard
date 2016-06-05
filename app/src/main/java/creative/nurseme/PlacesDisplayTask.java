@@ -1,10 +1,12 @@
 package creative.nurseme;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONObject;
@@ -32,13 +34,15 @@ public class PlacesDisplayTask extends AsyncTask<Object, Integer, List<HashMap<S
         } catch (Exception e) {
             Log.d("Exception", e.toString());
         }
+
+
         return googlePlacesList;
     }
 
     @Override
     protected void onPostExecute(List<HashMap<String, String>> list) {
-        googleMap.clear();
-        for (int i = 0; i < list.size(); i++) {
+
+        for (int i = 0; i < list.size()/3; i++) {
             MarkerOptions markerOptions = new MarkerOptions();
             HashMap<String, String> googlePlace = list.get(i);
             double lat = Double.parseDouble(googlePlace.get("lat"));
@@ -51,4 +55,5 @@ public class PlacesDisplayTask extends AsyncTask<Object, Integer, List<HashMap<S
             googleMap.addMarker(markerOptions);
         }
     }
+
 }

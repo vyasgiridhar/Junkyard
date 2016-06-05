@@ -50,6 +50,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.SphericalUtil;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +72,7 @@ public class MainActivity extends FragmentActivity
     Marker currLocationMarker;
     protected boolean located;
     private List<Polyline> polylines;
-
+    private  MarkerOptions Current;
 
     private static final int[] COLORS = new int[]{R.color.black,R.color.wallet_holo_blue_light,R.color.primary_darker,R.color.accent,R.color.primary_dark_material_light};
 
@@ -101,6 +103,7 @@ public class MainActivity extends FragmentActivity
             }
         });
 
+
     }
 
     @Override
@@ -128,36 +131,24 @@ public class MainActivity extends FragmentActivity
     int i = 0;
     @Override
     public void onLocationChanged(Location location) {
-
+        located = true;
         //place marker at current position
         //mGoogleMap.clear();
         if (currLocationMarker != null) {
             currLocationMarker.remove();
         }
         latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        if(i==0){
-            StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-            googlePlacesUrl.append("location=" + latitude + "," + longitude);
-            googlePlacesUrl.append("&radius=" + PROXIMITY_RADIUS);
-            googlePlacesUrl.append("&types=" + type);
-            googlePlacesUrl.append("&sensor=true");
-            googlePlacesUrl.append("&key=" + GOOGLE_API_KEY);
 
-            GooglePlacesReadTask googlePlacesReadTask = new GooglePlacesReadTask();
-            Object[] toPass = new Object[2];
-            toPass[0] = map;
-            toPass[1] = googlePlacesUrl.toString();
-            googlePlacesReadTask.execute(toPass);
+
+        if(i==0) {
+            //zoom to current position for the first time:
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(latLng).zoom(14).build();
+
+            map.animateCamera(CameraUpdateFactory
+                    .newCameraPosition(cameraPosition));
+            ++i;
         }
-        Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
-
-        //zoom to current position:
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(latLng).zoom(14).build();
-
-        map.animateCamera(CameraUpdateFactory
-                .newCameraPosition(cameraPosition));
-
         //If you only need one location, unregister the listener
         //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 
@@ -166,7 +157,6 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onConnected(Bundle bundle) {
-        Toast.makeText(this,"onConnected",Toast.LENGTH_SHORT).show();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
@@ -177,11 +167,11 @@ public class MainActivity extends FragmentActivity
             //mGoogleMap.clear();
             located = true;
             latLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng);
-            markerOptions.title("Current Position");
-            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-            currLocationMarker = map.addMarker(markerOptions);
+            Current = new MarkerOptions();
+            Current.position(latLng);
+            Current.title("Current Position");
+            Current.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+            currLocationMarker = map.addMarker(Current);
         }
 
         mLocationRequest = new LocationRequest();
@@ -194,20 +184,28 @@ public class MainActivity extends FragmentActivity
 
 
     }
+
+
+    private MarkerOptions Dest;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(TAG, "onActivityResult: I was here");
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
                 Destination = PlaceAutocomplete.getPlace(this, data);
+                if (Destination == null) Log.d(TAG, "onActivityResult: Error in Destination");
                 Log.i(TAG, "Place: " + Destination.getName());
                 LatLng latlng = Destination.getLatLng();
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(latlng);
+                Log.d(TAG, "onActivityResult: " + latlng);
                 markerOptions.title("Destination");
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
                 map.addMarker(markerOptions);
+                Dest = markerOptions;
                 route();
+                getCenters();
+
 
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
@@ -218,9 +216,8 @@ public class MainActivity extends FragmentActivity
                 // The user canceled the operation.
             }
         }
+
     }
-
-
     public void route()
     {
             pd = ProgressDialog.show(this, "Please wait.",
@@ -232,6 +229,7 @@ public class MainActivity extends FragmentActivity
                     .waypoints(latLng, Destination.getLatLng())
                     .build();
             routing.execute();
+
     }
 
     @Override
@@ -276,14 +274,12 @@ public class MainActivity extends FragmentActivity
 
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color(getResources().getColor(COLORS[colorIndex]));
-            polyOptions.width(5 + i * 3);
+            polyOptions.width(12 + i * 3);
             polyOptions.addAll(route.get(i).getPoints());
-            Polyline polyline = map.addPolyline(polyOptions);
-            polylines.add(polyline);
-
+            map.addPolyline(polyOptions);
             Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
         }
-
+        getCenters();
         // Start marker
 
     }
@@ -295,7 +291,6 @@ public class MainActivity extends FragmentActivity
 
 
     protected synchronized void buildGoogleApiClient() {
-        Toast.makeText(this,"buildGoogleApiClient",Toast.LENGTH_SHORT).show();
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -349,12 +344,36 @@ public class MainActivity extends FragmentActivity
         }
         map.setTrafficEnabled(true);
         map.setIndoorEnabled(true);
+        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         map.setBuildingsEnabled(true);
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if(marker.getPosition()  != latLng || marker.getPosition() != Dest.getPosition()) {
+                    Intent i = new Intent(MainActivity.this, ParcelSelectActivity.class);
+                    startActivity(i);
+                }
+                return false;
+            }
+        });
 
 
-        Toast.makeText(this, "mGoogleApiClient.isConnecting()"+ mGoogleApiClient.isConnecting(), Toast.LENGTH_SHORT).show();
     }
 
+    public void getCenters(){
+        StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+        googlePlacesUrl.append("location=" + latLng.latitude + "," + latLng.longitude);
+        googlePlacesUrl.append("&radius=" + 10000);
+        googlePlacesUrl.append("&types=" + "post_office");
+        googlePlacesUrl.append("&sensor=true");
+        googlePlacesUrl.append("&key=" + "AIzaSyADB0b0XmBqFdvTaspURI2JchNEU9RanOs");
+        GooglePlacesReadTask googlePlacesReadTask = new GooglePlacesReadTask();
+        Object[] toPass = new Object[2];
+        toPass[0] = map;
+        toPass[1] = googlePlacesUrl.toString();
+        googlePlacesReadTask.execute(toPass);
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -377,4 +396,6 @@ public class MainActivity extends FragmentActivity
 
         return super.onOptionsItemSelected(item);
     }
+
+
 }

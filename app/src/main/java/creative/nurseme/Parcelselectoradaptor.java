@@ -5,16 +5,13 @@ package creative.nurseme;
  */
 
 import android.content.Context;
-        import java.util.ArrayList;
-        import java.util.HashMap;
-
-        import android.app.Activity;
-        import android.view.LayoutInflater;
-        import android.view.View;
-        import android.view.ViewGroup;
-        import android.widget.BaseAdapter;
-        import android.widget.ImageView;
-        import android.widget.TextView;
+import java.util.ArrayList;
+import android.app.Activity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
 
 public class Parcelselectoradaptor extends BaseAdapter {
 
@@ -42,7 +39,7 @@ public class Parcelselectoradaptor extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi=convertView;
         if(convertView==null)
-            vi = inflater.inflate(R.layout.listview_item, null);
+            vi = inflater.inflate(R.layout.listview_item, parent,false);
 
         TextView Weight = (TextView)vi.findViewById(R.id.Weight); // Weight
         TextView  Desc= (TextView)vi.findViewById(R.id.Desc); //  Description

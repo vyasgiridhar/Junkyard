@@ -16,22 +16,26 @@ import butterknife.Bind;
  * Created by vyas on 6/4/16.
  */
 public class ParcelSelectActivity  extends Activity {
-    @Bind(R.id.list) ListView l;
     Parcelselectoradaptor Adap = null;
+    ListView l;
     String TAG = "Poop";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.parcelsview);
         Parcel Q = new Parcel();
+        l =  (ListView) this.findViewById(R.id.list);
+
         final ArrayList<Parcel> Parcels = Q.populateparcel();
 
         Adap = new Parcelselectoradaptor(this,Parcels);
+
         l.setAdapter(Adap);
 
         l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.d(TAG, "onItemClick: "+Parcels.get(i).getFrom());
+                Log.d(TAG, "onItemClick: "+Parcels.get(i).getDesc());
             }
         });
     }

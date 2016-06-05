@@ -8,6 +8,7 @@ import com.google.android.gms.maps.GoogleMap;
 /**
  * Created by vyas on 6/5/16.
  */
+
 public class GooglePlacesReadTask extends AsyncTask<Object, Integer, String> {
     String googlePlacesData = null;
     GoogleMap googleMap;

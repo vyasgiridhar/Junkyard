@@ -34,7 +34,7 @@ public class Parcel {
         ArrayList<Parcel> x = new ArrayList<>();
         int i = 0;
         Parcel p;
-        Date d = new Date("12-12-12");
+        Date d = new Date("12/12/12");
         for(i = 0;i<10;i++){
             p = new Parcel("Mouse"+1,"Adyar","Coimbatore",d,null,false,1,12.1);
             x.add(p);
