@@ -29,6 +29,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
@@ -124,7 +125,7 @@ public class MainActivity extends FragmentActivity
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Toast.makeText(this,"onConnectionFailed",Toast.LENGTH_SHORT).show();
     }
-
+    int i = 0;
     @Override
     public void onLocationChanged(Location location) {
 
@@ -134,12 +135,20 @@ public class MainActivity extends FragmentActivity
             currLocationMarker.remove();
         }
         latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Current Position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        currLocationMarker = map.addMarker(markerOptions);
+        if(i==0){
+            StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+            googlePlacesUrl.append("location=" + latitude + "," + longitude);
+            googlePlacesUrl.append("&radius=" + PROXIMITY_RADIUS);
+            googlePlacesUrl.append("&types=" + type);
+            googlePlacesUrl.append("&sensor=true");
+            googlePlacesUrl.append("&key=" + GOOGLE_API_KEY);
 
+            GooglePlacesReadTask googlePlacesReadTask = new GooglePlacesReadTask();
+            Object[] toPass = new Object[2];
+            toPass[0] = map;
+            toPass[1] = googlePlacesUrl.toString();
+            googlePlacesReadTask.execute(toPass);
+        }
         Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
 
         //zoom to current position:
@@ -267,7 +276,7 @@ public class MainActivity extends FragmentActivity
 
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color(getResources().getColor(COLORS[colorIndex]));
-            polyOptions.width(10 + i * 3);
+            polyOptions.width(5 + i * 3);
             polyOptions.addAll(route.get(i).getPoints());
             Polyline polyline = map.addPolyline(polyOptions);
             polylines.add(polyline);
